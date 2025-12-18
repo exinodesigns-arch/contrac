@@ -1,0 +1,7 @@
+{
+  "name": "ConstructTrack - Construction Management",
+  "description": "A construction management app to track projects, work areas, and pending tasks with detailed itemization and quantity calculation.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
