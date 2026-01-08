@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from './Modal';
-import { CameraIcon } from './icons';
+import { CameraIcon, UploadIcon } from './icons';
 
 interface CameraModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface CameraModalProps {
 const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +65,22 @@ const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture })
     }
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageDataUrl = e.target?.result as string;
+        onCapture(imageDataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -71,7 +88,10 @@ const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture })
       title="Take a Photo"
       footer={
         <div className="flex justify-between items-center w-full">
-            <div/>
+            <button onClick={triggerFileUpload} className="flex items-center gap-2 py-2 px-4 bg-gray-600 rounded-lg hover:bg-gray-500 transition">
+                <UploadIcon className="w-4 h-4" />
+                Upload Image
+            </button>
             <div className="flex gap-2">
                 <button onClick={onClose} className="py-2 px-4 bg-gray-600 rounded-lg hover:bg-gray-500 transition">Cancel</button>
                 <button onClick={handleCapture} disabled={!stream} className="flex items-center gap-2 py-2 px-4 bg-primary text-white rounded-lg hover:bg-secondary transition disabled:bg-gray-500">
@@ -79,6 +99,13 @@ const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCapture })
                     Capture
                 </button>
             </div>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                accept="image/*"
+            />
         </div>
       }
     >

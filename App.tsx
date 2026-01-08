@@ -1,57 +1,29 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Project, Area, WorkItem, WorkStatus, WorkCategory, UnitType } from './types';
 import ProjectSidebar from './components/ProjectSidebar';
 import ProjectView from './components/ProjectView';
+import LoginPage from './components/LoginPage';
 import { PlusIcon, CloudUploadIcon, MenuIcon } from './components/icons';
 
-const initialProjects: Project[] = [
-  {
-    id: 'proj-1',
-    name: 'Downtown Highrise',
-    areas: [
-      {
-        id: 'area-1',
-        name: 'First Floor - Lobby',
-        workItems: [
-          {
-            id: 'item-1', name: 'Marble Flooring', category: WorkCategory.INTERIOR,
-            subWorks: [{id: 'sw-1', name: 'Grinding', isCompleted: true}, {id: 'sw-2', name: 'Polishing', isCompleted: false}],
-            designPreference: 'Italian Statuario marble', color: 'White with grey veins',
-            length: 100, width: 50, depth: 0, units: 0, unitType: UnitType.SQFT, quantity: 5000,
-            status: WorkStatus.IN_PROGRESS
-          }
-        ]
-      },
-      {
-        id: 'area-2',
-        name: 'Second Floor - Office Space',
-        workItems: [
-            {
-                id: 'item-2', name: 'Electrical Wiring', category: WorkCategory.ELECTRICAL,
-                subWorks: [{id: 'sw-3', name: 'Conduit laying', isCompleted: true}, {id: 'sw-4', name: 'Wire pulling', isCompleted: true}],
-                designPreference: 'Standard copper wiring', color: 'N/A',
-                length: 500, width: 0, depth: 0, units: 0, unitType: UnitType.RUNNING_METER, quantity: 500,
-                status: WorkStatus.COMPLETED
-            },
-            {
-                id: 'item-3', name: 'Drywall Installation', category: WorkCategory.CIVIL,
-                subWorks: [],
-                designPreference: 'Fire-rated gypsum board', color: 'Off-white',
-                length: 200, width: 8, depth: 0, units: 0, unitType: UnitType.SQFT, quantity: 1600,
-                status: WorkStatus.PENDING
-            }
-        ]
-      }
-    ]
-  }
-];
-
-
 const App: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(initialProjects.length > 0 ? initialProjects[0].id : null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetch('/api/projects')
+        .then(res => res.json())
+        .then(data => {
+          setProjects(data);
+          if (data.length > 0) {
+            setSelectedProjectId(data[0].id);
+          }
+        });
+    }
+  }, [isAuthenticated]);
 
   const selectedProject = useMemo(() => {
     return projects.find(p => p.id === selectedProjectId) || null;
@@ -174,18 +146,29 @@ const App: React.FC = () => {
      }));
   };
   
-  const handleSaveToCloud = () => {
-    const dataStr = JSON.stringify(projects, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const linkElement = document.createElement('a');
-    linkElement.href = url;
-    linkElement.download = 'construct-track-data.json';
-    document.body.appendChild(linkElement);
-    linkElement.click();
-    document.body.removeChild(linkElement);
-    URL.revokeObjectURL(url);
+  const handleSaveToCloud = async () => {
+    try {
+      const response = await fetch('/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projects),
+      });
+      if (response.ok) {
+        alert('Projects saved successfully!');
+      } else {
+        alert('Failed to save projects.');
+      }
+    } catch (error) {
+      console.error('Error saving projects:', error);
+      alert('An error occurred while saving projects.');
+    }
   };
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="flex h-screen bg-neutral text-gray-200 font-sans">
