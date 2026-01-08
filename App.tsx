@@ -211,7 +211,7 @@ const App: React.FC = () => {
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full">
-              <h2 className="text-3xl font-bold text-gray-400">No Project Selected</h2>
+              <h2 className="text-3xl font-bold text-white400">No Project Selected</h2>
               <p className="text-gray-500 mt-2">Please select a project from the sidebar or create a new one.</p>
                <button onClick={() => {
                    const name = prompt("Enter new project name:");
